@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Condition Example</title>
+  </head>
+  <body>
+    <!-- Render different content based on the value of 'data' -->
+    {% if data >= 30 %}
+    <h3>The value is greater than or equal to 30.</h3>
+    {% elif data > 25 %}
+    <h3>The value is greater than 25.</h3>
+    {% else %}
+    <h3>{{ data }}</h3>
+    {% endif %}
+  </body>
+</html>
+
