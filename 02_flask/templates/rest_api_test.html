@@ -16,10 +16,10 @@
       <div class="alert alert-primary" role="alert">
           A simple primary alert—check it out!
       </div>
-      <button type="submit" class="btn btn-secondary" v-on:click="get">GET</button>
-      <button type="submit" class="btn btn-secondary" v-on:click="post">POST</button>
-      <button type="submit" class="btn btn-secondary" v-on:click="put">PUT</button>
-      <button type="submit" class="btn btn-secondary" v-on:click="delete">DELETE</button>
+      <button type="submit" class="btn btn-secondary" v-on:click="get_test">GET</button>
+      <button type="submit" class="btn btn-secondary" v-on:click="post_test">POST</button>
+      <button type="submit" class="btn btn-secondary" v-on:click="put_test">PUT</button>
+      <button type="submit" class="btn btn-secondary" v-on:click="delete_test">DELETE</button>
     </div>
 
     <!-- Optional JavaScript; choose one of the two! -->
@@ -39,28 +39,29 @@
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
       
     <script>
-      export default {
+      const app = new Vue({
+        el: "#vue_test",
         methods: {
-          get: () => {
+          get_test: () => {
             axios("http://localhost:5555/test", {
               method: "get",
               params: {
                 email: "test@test.com",
-              }
+              },
             })
               .then((response) => {
-                console.log(response.data['status']);
+                console.log(response.data["status"]);
               })
               .catch((error) => {
                 console.log(error);
               });
           },
-          post: () => {
+          post_test: () => {
             axios("http://localhost:5555/test", {
               method: "post",
               data: {
                 email: "test@test.com",
-              }
+              },
             })
               .then((response) => {
                 console.log(response.data["status"]);
@@ -69,12 +70,12 @@
                 console.log(error);
               });
           },
-          put: () => {
+          put_test: () => {
             axios("http://localhost:5555/test", {
               method: "put",
               params: {
                 email: "test@test.com",
-              }
+              },
             })
               .then((response) => {
                 console.log(response.data["status"]);
@@ -83,12 +84,12 @@
                 console.log(error);
               });
           },
-          delete: () => {
+          delete_test: () => {
             axios("http://localhost:5555/test", {
               method: "delete",
               params: {
                 email: "test@test.com",
-              }
+              },
             })
               .then((response) => {
                 console.log(response.data["status"]);
@@ -96,9 +97,9 @@
               .catch((error) => {
                 console.log(error);
               });
-          }
-        }
-      }
+          },
+        },
+      });
     </script>
   </body>
 </html>
