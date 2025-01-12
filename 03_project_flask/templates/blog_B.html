@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="description" content="" />
+  <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors" />
+  <meta name="generator" content="Jekyll v4.1.1" />
+  <title>Kim's Blog</title>
+
+  <link rel="canonical" href="https://getbootstrap.com/docs/4.5/examples/blog/" />
+
+  <!-- Bootstrap core CSS -->
+  <link href="/static/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <style>
+    .bd-placeholder-img {
+      font-size: 1.125rem;
+      text-anchor: middle;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    @media (min-width: 768px) {
+      .bd-placeholder-img-lg {
+        font-size: 3.5rem;
+      }
+    }
+  </style>
+  <!-- Custom styles for this template -->
+  <link href="https://fonts.googleapis.com/css?family=Playfair+Display:700,900" rel="stylesheet" />
+  <link href="//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css" rel="stylesheet" type="text/css" />
+
+  <!-- Custom styles for this template -->
+  <link href="/static/blog.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div class="container">
+      <header class="blog-header py-3">
+        <div class="row flex-nowrap justify-content-between align-items-center">
+          <div class="col-4 pt-1">
+            <a class="text-muted" href="#">WK.KIM</a>
+          </div>
+          <div class="col-4 text-center"></div>
+          <div class="col-4 d-flex justify-content-end align-items-center"></div>
+        </div>
+      </header>
+
+      <div class="jumbotron p-4 p-md-5 text-white rounded bg-dark">
+        <div class="col-md-10 px-0">
+          <h2 class="display-4 mb-4">
+            <b>Introducing WoongKeol Kim [Page B!]]</b>
+          </h2>
+          <p class="lead my-3">
+
+          </p>
+          <p class="lead mb-2">
+            {% if user_email != null %} 
+            You are subscribed with {{ user_email }}.&nbsp;
+            <a class="btn btn-light" href="/blog/logout" role="button">Unsubscribe</a>
+            {% else %}
+            Leave your email, and we’ll send updates whenever a new blog is posted.&nbsp;
+            <form action="/blog/set_email" method="post">
+              <div class="form-row">
+                <div class="col">
+                  <input type="email" class="form-control" name="user_email">
+                  <input type="hidden" name="blog_id" value="A">
+                </div>
+                <div class="col">
+                  <button type="submit" class="btn btn-primary">Subscribe</button>
+                </div>
+              </div>
+            </form>
+          {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <main role="main" class="container">
+      <div class="row">
+        <div class="col-md-8 blog-main">
+          <div class="blog-post">
+            <h2>Why Did I Become a Developer?</h2>
+            <p>
+              During my freshman year in college, I found myself more drawn to introductory programming courses like C++ and Java rather than my major subjects in electrical and electronics engineering. 
+              While working night shifts at a convenience store, I would solve programming problems by writing them on the back of discarded receipts. 
+              Looking back now, they were simple problems, but at the time, solving each one brought me immense joy and excitement, pulling me deeply into the world of programming.
+              By the time I was about to graduate, I had maintained good grades in my major while achieving a strong understanding of programming, recognized as one of the most proficient in my department.
+              This expertise greatly aided me in completing my graduation project, where I combined electronic circuits with a C# GUI program to create a comprehensive and integrated final product.
+            </p>
+            <br>
+            <h3>My First Professional Experience</h3>
+            <p>
+              My first career began at a Korean company developing defense systems. Having only worked with the WinForm framework before, I was introduced to WPF, a completely new framework. 
+              Although I hadn’t fully mastered WinForm yet, I was also required to consider the MVVM design pattern alongside WPF, which presented a significant challenge. 
+              Fortunately, I felt joy at the opportunity to learn and utilize a new framework.
+              Initially, it was tough to understand, but the repeated process of analyzing code and creating my own solutions brought me a sense of achievement.
+              Beyond WPF, I also started incorporating commercial SDKs into projects, applying mathematical concepts like Naive Bayes, 3D unit vectors, and 3D distance calculations to create new features tailored to customer requirements.
+            </p>
+            <br>
+            <h3>My Second Professional Experience</h3>
+            <p>
+              My second career was in a completely different industry from my first. Other than continuing to use C#, everything else was new. 
+              The unfamiliarity of factory automation systems was challenging, but what made it even harder were the specialized terminologies unique to the industry.
+              Furthermore, high security levels made obtaining related information nearly impossible.
+              What seemed simple at first often required understanding an overwhelming number of terms and concepts, making it difficult to adapt.
+              After joining, I repeatedly learned these terms and imagined the internal structure of the systems to develop my hypotheses.
+              While my hypotheses weren’t always correct, they gradually aligned with reality. Eventually, I became capable of diagnosing system issues and identifying their root causes.
+              By running simulations, I could determine solutions that addressed both the problems and their underlying causes.
+            </p>
+            <br>
+            <h3>Challenges in My Second Job</h3>
+            <p>
+              Understanding CAN communication and electric vehicle battery packs in my second job was extremely challenging. 
+              The first reason was the specialized nature of the industry, which made finding knowledgeable people difficult. 
+              As a result, I spent a lot of time experimenting with specialized tools and reflecting on their operation during my personal time.
+              The second reason was that battery packs appeared simple on the surface but involved numerous considerations. 
+              Analyzing even a single model required a lot of time, and I needed to understand multiple models. 
+              Although I automated sequences to account for all conditions, exceptions constantly arose, teaching me the hard way that automation is never foolproof. 
+              Issues could arise from software I developed due to high-current noise, from the battery pack itself, or even from the automation equipment.
+              These problems were often invisible and couldn’t always be replicated due to inconsistent conditions. 
+              By transforming every challenge into personal growth, I became a valuable asset not only within my company but also to our clients.
+            </p>
+            <h3>Leadership and Corporate Management</h3>
+            <p>
+              In 2022, I was promoted to the head of a Hungarian subsidiary of a Korean company. 
+              Taking on the role of managing director presented a significantly different set of responsibilities and challenges compared to my previous developer roles. 
+              At the same time, I continued handling development tasks, which necessitated efficient time and resource management.
+
+              The most challenging aspect of this period was the constant pressure of being held accountable for every issue. 
+              Balancing the demands of clients, corporate headquarters, and team members was no easy feat. 
+              The burden of responsibility, especially when problems arose, often kept me awake at night. 
+              Even minor mistakes could impact the overall operation of the subsidiary, keeping me in a state of perpetual vigilance.
+
+              However, these experiences taught me invaluable lessons. 
+              I came to appreciate the importance of balanced decision-making, striving to propose reasonable solutions and earn trust among different stakeholders. 
+              Through this process, I honed my problem-solving and communication skills significantly. 
+              Additionally, I learned the importance of delegating tasks to team members and fostering collaboration based on mutual trust.
+
+              The most profound realization was that it’s impossible to control every issue perfectly. 
+              The key was to respond calmly and rationally to problems and work collaboratively with my team to find solutions. 
+              Through repeated experiences, I learned how to grow under pressure and turn accountability into an opportunity for personal development.
+
+              Ultimately, these challenging experiences strengthened my leadership abilities. 
+              Looking back, I believe these difficulties shaped me into a more mature individual capable of confidently tackling any future challenges.
+            </p>
+            <br>
+            <h3>My Dream: Building My First Blog</h3>
+            <p>
+              So far, my career has revolved around developing Windows applications and software. 
+              However, I have always been intrigued by the idea of building my own webpage and learning about the technologies and frameworks other software developers use. 
+              In pursuit of this curiosity, I discovered ASP.NET and began planning what I could achieve with it.
+              My initial goal was to create my own blog to showcase my career journey. ASP.NET, MVC patterns, Frontend frameworks like HTML, CSS, Bootstrap, and others—all of these were new to me.
+              Before starting the project, I had vague fears like "Where do I even begin?" or "Can I do this well?" But by defining the necessary features and gradually studying how to implement them, I built my blog step by step.
+              After completing the development, I considered how to make it accessible to others. I discovered that deploying it as a Docker image on my personal NAS would make it viewable by others.
+              Instead of using the default domain provided by the NAS, I learned about domain hosting, purchased my own domain, and configured it for use.
+              Later, to enhance the blog's design, I applied Frontend frameworks like Bootstrap and React.
+            </p>
+            <br>
+            <h3>My Ambition: Earning a Master’s Degree</h3>
+            <p>
+              One question I frequently encountered early in my career was, "Why software development when you majored in electrical engineering?" 
+              While my second company appreciated my dual expertise in electrical engineering and software, this question often came up before I had proven myself.
+              During my undergraduate studies, I frequently doubted my choice of major, as I was more passionate about programming than electrical engineering. 
+              However, despite these doubts, I continued to excel academically and maintain my curiosity about programming.
+
+              After completing my freshman year, I enlisted in the military (like all Korean men). During my service, I read books about information processing and suddenly felt a desire to pursue a master’s degree after graduation.
+              However, financial constraints forced me to prioritize starting my career over further education. 
+              Although I wanted to study part-time while working, the location of my workplace made it infeasible.
+
+              After transferring to a second company, being dispatched to Hungary, and settling into life there, the pandemic led to an increase in online part-time courses.
+              I seized this opportunity to start studying for a master’s degree in AI. 
+              Balancing work abroad with academic studies was undoubtedly challenging, but it allowed me to acquire in-depth knowledge and experience through discussions and projects.
+              While I’ve only scratched the surface of machine learning and deep learning, I feel a little more confident now. 
+              The vastness of the field makes me humble, as even the limited areas I studied were enormous and impossible to fully grasp.
+            </p>
+            <h3>C#: A Journey to Python</h3>
+            <p>
+              My professional experience has been predominantly built around C# as my primary programming language. While SQL was also integral to my career, my expertise has been centered on C#. 
+              I’ve always believed that one should "not spend 10 years doing what they learned in just one year" and that "when learning stops, life also stops."
+              This mindset has driven me to continuously explore new tools and technologies, fostering my growth as a developer.
+
+              When I began my master’s studies, I realized that Python was essential in the fields of AI and machine learning. 
+              Although I had never worked with Python before, my academic and professional interests motivated me to tackle this new language. 
+              Initially, stepping out of my comfort zone was daunting, but Python's simplicity and robust library ecosystem quickly won me over.
+
+              Python became an indispensable tool for text analysis, building machine learning models, and deep learning. 
+              Libraries like Pandas and NumPy for data manipulation, as well as TensorFlow and PyTorch for deep learning, made my research and projects far more efficient. 
+              Through this experience, I came to understand that "a programming language is just a tool, and true developer qualities lie in problem-solving skills and a learning mindset."
+
+              Today, Python is more than just a new language to me—it has opened doors to the world of AI and data analytics. 
+              This journey has added a new chapter to my career, and I aim to leverage both C# and Python, along with various other technologies, to contribute to a broader range of fields as I continue to grow.
+            </p>
+            <h3>Embracing New Challenges</h3>
+            <p>
+              Whenever I start learning something new, I often wonder, "Can I really do this well?" or "Where should I begin?" 
+              Over time, I’ve realized that the best answer to these questions is simply to start.
+              While the beginning is always tough, taking that first step reveals the next, and as I persist step by step, my experiences snowball into invaluable assets. 
+              This process fills me with a sense of accomplishment, which becomes the driving force for my next challenge.
+
+              New challenges go beyond acquiring skills or knowledge; they test and expand my limits. 
+              The exhilaration I feel during this process is something I deeply cherish and is the reason I continuously seek growth.
+
+              Recently, I’ve become interested in fields outside of development, such as marketing, sales, and design. 
+              However, I also understand the importance of prioritization and the risk of overextending myself, so I’m approaching these interests cautiously. 
+              Nevertheless, I plan to delve into these areas in the near future. 
+              I believe that these new challenges will broaden my perspective and help me grow into a more well-rounded professional with diverse expertise.
+            </p>
+          </div>
+        </div>
+        <!-- /.blog-main -->
+
+        <aside class="col-md-4 blog-sidebar">
+          <div class="p-4 mb-3 bg-light rounded">
+            <h4>About</h4>
+            <p class="mb-0">
+              A developer with expertise in C# and Python, I’ve also honed my skills in React, Bootstrap, HTML, CSS, Docker, SQL, and more. Driven by the belief that "learning never ends," I strive for continuous growth and improvement.
+            </p>
+          </div>
+
+          <div class="p-4">
+            <h4>SNS</h4>
+            <ol class="list-unstyled">
+              <li><a href="https://www.woongkeol.blog">ASP.NET Blog</a></li>
+              <li><a href="https://www.linkedin.com/in/woongkeol-kim">LinkedIn</a></li>
+              <li><a href="https://github.com/Kim-William">GitHub</a></li>
+            </ol>
+          </div>
+        </aside>
+        <!-- /.blog-sidebar -->
+      </div>
+      <!-- /.row -->
+    </main>
+    <!-- /.container -->
+</body>
+</html>
