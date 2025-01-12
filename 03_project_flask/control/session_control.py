@@ -10,7 +10,6 @@ class BlogSession():
         now = datetime.now()
         # https://strftime.org/
         now_time = now.strftime("%d/%m/%Y %H:%M:%S")  
-
         mongo_db = conn_mongodb()
         mongo_db.insert_one({
             'access_time': now_time,

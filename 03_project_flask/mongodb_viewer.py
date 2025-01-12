@@ -9,11 +9,11 @@ connection = pymongo.MongoClient(f'mongodb://{host}')
 blog_session_db = connection.blog_session_db
 blog_ab = blog_session_db.blog_ab
 
-print('---------- server admin ----------')
-print(connection.admin.command('ismaster'))
+# print('---------- server admin ----------')
+# print(connection.admin.command('ismaster'))
 
-print('---------- server info ----------')
-print(connection.server_info())
+# print('---------- server info ----------')
+# print(connection.server_info())
 
 
 print('---------- query result ----------')
