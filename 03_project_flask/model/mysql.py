@@ -13,4 +13,4 @@ CONN = pymysql.connect(
 def conn_mysql():
     if not CONN.open:
         CONN.ping(reconnect=True)
-        return CONN
+    return CONN

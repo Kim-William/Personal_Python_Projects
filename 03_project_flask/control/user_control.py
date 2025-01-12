@@ -16,7 +16,7 @@ class User(UserMixin):
         mysql_db = conn_mysql()
         db_cursor = mysql_db.cursor()
         sql = f"SELECT * FROM user_info WHERE USER_ID = '{str(user_id)}'"
-        print(sql)
+        # print(sql)
         db_cursor.execute(sql)
         user = db_cursor.fetchone()
         if not user:
@@ -29,7 +29,6 @@ class User(UserMixin):
         mysql_db = conn_mysql()
         db_cursor = mysql_db.cursor()
         sql = f"SELECT * FROM user_info WHERE USER_EMAIL = '{str(user_email)}'"
-        print (sql)
         db_cursor.execute(sql)
         user = db_cursor.fetchone()
         if not user:
@@ -44,7 +43,6 @@ class User(UserMixin):
             mysql_db = conn_mysql()
             db_cursor = mysql_db.cursor()
             sql = f"INSERT INTO user_info (USER_EMAIL, BLOG_ID) VALUES ('{str(user_email)}','{str(blog_id)}')"
-            print(sql)
             db_cursor.execute(sql)
             mysql_db.commit()
             return User.find(user_email)
@@ -56,7 +54,6 @@ class User(UserMixin):
         mysql_db = conn_mysql()
         db_cursor = mysql_db.cursor()
         sql = f"DELETE FROM user_info WHERE USER_ID = {user_id}"
-        print(sql)
         deleted = db_cursor.execute(sql)
         mysql_db.commit()
         return deleted
