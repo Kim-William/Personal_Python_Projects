@@ -11,3 +11,5 @@
 03_project_flask/control/__pycache__
 03_project_flask/model/__pycache__
 03_project_flask/view/__pycache__
+/04_FastAPI/source/raw
+04_FastAPI/__pycache__
