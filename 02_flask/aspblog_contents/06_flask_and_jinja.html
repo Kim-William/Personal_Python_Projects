@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head><meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="stylesheet" href="/css/jp-notebook.css">
+<!-- Load mathjax -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS_CHTML-full,Safe"> </script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    init_mathjax = function() {
+        if (window.MathJax) {
+        // MathJax loaded
+            MathJax.Hub.Config({
+                TeX: {
+                    equationNumbers: {
+                    autoNumber: "AMS",
+                    useLabelIds: true
+                    }
+                },
+                tex2jax: {
+                    inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+                    displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+                    processEscapes: true,
+                    processEnvironments: true
+                },
+                displayAlign: 'center',
+                messageStyle: 'none',
+                CommonHTML: {
+                    linebreaks: {
+                    automatic: true
+                    }
+                }
+            });
+
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+        }
+    }
+    init_mathjax();
+    </script>
+<!-- End of mathjax configuration --><script type="module">
+  document.addEventListener("DOMContentLoaded", async () => {
+    const diagrams = document.querySelectorAll(".jp-Mermaid > pre.mermaid");
+    // do not load mermaidjs if not needed
+    if (!diagrams.length) {
+      return;
+    }
+    const mermaid = (await import("https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.7.0/mermaid.esm.min.mjs")).default;
+    const parser = new DOMParser();
+
+    mermaid.initialize({
+      maxTextSize: 100000,
+      maxEdges: 100000,
+      startOnLoad: false,
+      fontFamily: window
+        .getComputedStyle(document.body)
+        .getPropertyValue("--jp-ui-font-family"),
+      theme: document.querySelector("body[data-jp-theme-light='true']")
+        ? "default"
+        : "dark",
+    });
+
+    let _nextMermaidId = 0;
+
+    function makeMermaidImage(svg) {
+      const img = document.createElement("img");
+      const doc = parser.parseFromString(svg, "image/svg+xml");
+      const svgEl = doc.querySelector("svg");
+      const { maxWidth } = svgEl?.style || {};
+      const firstTitle = doc.querySelector("title");
+      const firstDesc = doc.querySelector("desc");
+
+      img.setAttribute("src", `data:image/svg+xml,${encodeURIComponent(svg)}`);
+      if (maxWidth) {
+        img.width = parseInt(maxWidth);
+      }
+      if (firstTitle) {
+        img.setAttribute("alt", firstTitle.textContent);
+      }
+      if (firstDesc) {
+        const caption = document.createElement("figcaption");
+        caption.className = "sr-only";
+        caption.textContent = firstDesc.textContent;
+        return [img, caption];
+      }
+      return [img];
+    }
+
+    async function makeMermaidError(text) {
+      let errorMessage = "";
+      try {
+        await mermaid.parse(text);
+      } catch (err) {
+        errorMessage = `${err}`;
+      }
+
+      const result = document.createElement("details");
+      result.className = 'jp-RenderedMermaid-Details';
+      const summary = document.createElement("summary");
+      summary.className = 'jp-RenderedMermaid-Summary';
+      const pre = document.createElement("pre");
+      const code = document.createElement("code");
+      code.innerText = text;
+      pre.appendChild(code);
+      summary.appendChild(pre);
+      result.appendChild(summary);
+
+      const warning = document.createElement("pre");
+      warning.innerText = errorMessage;
+      result.appendChild(warning);
+      return [result];
+    }
+
+    async function renderOneMarmaid(src) {
+      const id = `jp-mermaid-${_nextMermaidId++}`;
+      const parent = src.parentNode;
+      let raw = src.textContent.trim();
+      const el = document.createElement("div");
+      el.style.visibility = "hidden";
+      document.body.appendChild(el);
+      let results = null;
+      let output = null;
+      try {
+        let { svg } = await mermaid.render(id, raw, el);
+        svg = cleanMermaidSvg(svg);
+        results = makeMermaidImage(svg);
+        output = document.createElement("figure");
+        results.map(output.appendChild, output);
+      } catch (err) {
+        parent.classList.add("jp-mod-warning");
+        results = await makeMermaidError(raw);
+        output = results[0];
+      } finally {
+        el.remove();
+      }
+      parent.classList.add("jp-RenderedMermaid");
+      parent.appendChild(output);
+    }
+
+
+    /**
+     * Post-process to ensure mermaid diagrams contain only valid SVG and XHTML.
+     */
+    function cleanMermaidSvg(svg) {
+      return svg.replace(RE_VOID_ELEMENT, replaceVoidElement);
+    }
+
+
+    /**
+     * A regular expression for all void elements, which may include attributes and
+     * a slash.
+     *
+     * @see https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+     *
+     * Of these, only `<br>` is generated by Mermaid in place of `\n`,
+     * but _any_ "malformed" tag will break the SVG rendering entirely.
+     */
+    const RE_VOID_ELEMENT =
+      /<\s*(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)\s*([^>]*?)\s*>/gi;
+
+    /**
+     * Ensure a void element is closed with a slash, preserving any attributes.
+     */
+    function replaceVoidElement(match, tag, rest) {
+      rest = rest.trim();
+      if (!rest.endsWith('/')) {
+        rest = `${rest} /`;
+      }
+      return `<${tag} ${rest}>`;
+    }
+
+    void Promise.all([...diagrams].map(renderOneMarmaid));
+  });
+</script>
+<!-- End of mermaid configuration --></head>
+<body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
+<main>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="1.-Creating-a-Web-Page-(HTML)-Using-Python-Flask">1. Creating a Web Page (HTML) Using Python Flask<a class="anchor-link" href="#1.-Creating-a-Web-Page-(HTML)-Using-Python-Flask">¶</a></h3><h4 id="1.1.-Jinja2-Template">1.1. Jinja2 Template<a class="anchor-link" href="#1.1.-Jinja2-Template">¶</a></h4><ul>
+<li>A simple syntax used when parts of a webpage need to be dynamically modified.</li>
+<li>Enables Python programming directly in the webpage.</li>
+<li>While Jinja2 offers detailed functionality, focus on the core concepts when starting.</li>
+<li>The two key syntaxes are:</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="p">{{</span> <span class="n">variable_name</span> <span class="p">}}</span>
+
+<span class="p">{</span><span class="o">%</span> <span class="n">Python</span> <span class="n">code</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+<h4 id="1.2.-Jinja2-Template-Engine">1.2. Jinja2 Template Engine<a class="anchor-link" href="#1.2.-Jinja2-Template-Engine">¶</a></h4><ul>
+<li>The Jinja2 template engine takes the HTML code and converts it into a template.</li>
+<li>Python code within the template is executed to fill the template, generating the final HTML file.</li>
+</ul>
+<h4 id="1.3.-Variables-(Jinja2-Template-Syntax)">1.3. Variables (Jinja2 Template Syntax)<a class="anchor-link" href="#1.3.-Variables-(Jinja2-Template-Syntax)">¶</a></h4><ul>
+<li>Variables can be dynamically inserted into the HTML using the <code>{{ variable_name }}</code> syntax.</li>
+</ul>
+<h4 id="1.4.-Folder-Structure">1.4. Folder Structure<a class="anchor-link" href="#1.4.-Folder-Structure">¶</a></h4><p>The following folder structure is used to organize the Flask project:</p>
+<pre><code>/variable_test.py
+/templates
+    /variable.html
+</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="2.-Testing-Variable-Rendering-in-variable.html">2. Testing Variable Rendering in <code>variable.html</code><a class="anchor-link" href="#2.-Testing-Variable-Rendering-in-variable.html">¶</a></h3><ul>
+<li>The <code>render_template()</code> function is used to pass variable values into the template for rendering.</li>
+</ul>
+<h4 id="2.1.-variable.html">2.1. <code>variable.html</code><a class="anchor-link" href="#2.1.-variable.html">¶</a></h4><ul>
+<li>In the HTML template, specify where the variable values will be inserted using the <code>{{ variable_name }}</code> syntax.</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">"viewport"</span> <span class="na">content</span><span class="o">=</span><span class="s">"width=device-width, initial-scale=1.0"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Document<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>Hello {{ name }}<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span> <span class="cm">&lt;!-- 'name' variable will be dynamically inserted here --&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">render_template</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/hello/&lt;user&gt;'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">hello_name</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+   <span class="c1"># Pass the 'user' variable to the HTML template</span>
+   <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">'variable.html'</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">user</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">"127.0.0.1"</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="s2">"5555"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre> * Serving Flask app '__main__'
+ * Debug mode: off
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5555
+Press CTRL+C to quit
+127.0.0.1 - - [02/Jan/2025 22:25:00] "GET /hello/kim HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>['login.html', 'login_bootstrap.html', 'variable.html']
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="3.-Loops-in-Jinja2-Template-Syntax">3. Loops in Jinja2 Template Syntax<a class="anchor-link" href="#3.-Loops-in-Jinja2-Template-Syntax">¶</a></h3><h4 id="3.1.-Folder-Structure">3.1. Folder Structure<a class="anchor-link" href="#3.1.-Folder-Structure">¶</a></h4><p>Organize the project files as follows:</p>
+<pre><code>/loop_test.py
+/templates
+    /loop.html
+</code></pre>
+<h4 id="3.2.-Loop-Syntax-in-Jinja2-Templates">3.2. Loop Syntax in Jinja2 Templates<a class="anchor-link" href="#3.2.-Loop-Syntax-in-Jinja2-Templates">¶</a></h4><ul>
+<li>The basic syntax for a loop is to use <code>for</code> to declare the loop and <code>endfor</code> to end it.</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="k">for</span> <span class="o">%</span><span class="p">}</span> <span class="p">{</span><span class="o">%</span> <span class="n">endfor</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+<ul>
+<li>Example:<ul>
+<li>Indentation is not required but is often used for readability.</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span> <span class="o">%</span><span class="p">}</span>
+<span class="p">{{</span> <span class="n">value</span> <span class="p">}}</span>
+<span class="p">{</span><span class="o">%</span> <span class="n">endfor</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1">### Flask Code Example</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">render_template</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/loop'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">loop</span><span class="p">():</span>
+    <span class="c1"># A list of values to pass to the template</span>
+    <span class="n">value_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'item1'</span><span class="p">,</span> <span class="s1">'item2'</span><span class="p">,</span> <span class="s1">'item3'</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">'loop.html'</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">value_list</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">"0.0.0.0"</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="s2">"5555"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="3.3.-HTML-Template:-loop.html">3.3. HTML Template: <code>loop.html</code><a class="anchor-link" href="#3.3.-HTML-Template:-loop.html">¶</a></h4><div class="highlight"><pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">"viewport"</span> <span class="na">content</span><span class="o">=</span><span class="s">"width=device-width, initial-scale=1.0"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Document<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+      <span class="cm">&lt;!-- Loop through the 'values' list and display each item in an &lt;li&gt; --&gt;</span>
+      {% for value in values %}
+      <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>{{ value }}<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+      {% endfor %}
+    <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="3.4.-Advanced-Loop-Syntax-in-Jinja2">3.4. Advanced Loop Syntax in Jinja2<a class="anchor-link" href="#3.4.-Advanced-Loop-Syntax-in-Jinja2">¶</a></h4><p>Jinja2 provides additional functionality for working with loops, but it has some differences compared to regular Python loops. Here's an explanation of these features:</p>
+<hr/>
+<ol>
+<li><strong><code>range()</code></strong></li>
+</ol>
+<ul>
+<li><strong>Similar to Python's <code>range()</code></strong>:<ul>
+<li>You can use <code>range()</code> in Jinja2, but it must work with the <code>length</code> filter for iterable objects like lists.</li>
+<li><strong>Note</strong>: <code>for index in range(len(values))</code> is <strong>not valid</strong> in Jinja2.</li>
+</ul>
+</li>
+</ul>
+<hr/>
+<ol start="2">
+<li><strong><code>len(values)</code></strong></li>
+</ol>
+<ul>
+<li>In Jinja2, to get the length of a list (like Python's <code>len()</code>), you need to use:<div class="highlight"><pre><span></span><span class="n">values</span> <span class="o">|</span> <span class="n">length</span>
+</pre></div>
+<ul>
+<li>The <code>| length</code> is a Jinja2 filter that returns the number of elements in a list.</li>
+</ul>
+</li>
+</ul>
+<hr/>
+<ol start="3">
+<li><strong><code>loop.index</code></strong></li>
+</ol>
+<ul>
+<li><strong>Retrieve the Current Iteration Count</strong>:<ul>
+<li>Use <code>loop.index</code> inside the loop to get the current iteration number (1-based index).</li>
+<li>Example:<ul>
+<li>For a list of <code>values = ['list1', 'list2', 'list3']</code>, the output of <code>loop.index</code> will be:<pre><code>1, 2, 3
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<hr/>
+<ol start="4">
+<li><strong><code>value[index]</code></strong></li>
+</ol>
+<ul>
+<li><strong>Access a List Element by Index</strong>:<ul>
+<li>Works the same way as Python's list indexing.</li>
+<li>Example:<ul>
+<li><code>values[index]</code> retrieves the element at position <code>index</code> from the list.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<hr/>
+<h4 id="3.5.-Example:-Jinja2-Loop-in-HTML">3.5. Example: Jinja2 Loop in HTML<a class="anchor-link" href="#3.5.-Example:-Jinja2-Loop-in-HTML">¶</a></h4><p>Here's an example of using advanced loop functionality:</p>
+<div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+  <span class="cm">&lt;!-- Use range() and loop.index to iterate through the list --&gt;</span>
+  {% for index in range(values | length) %}
+  <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>{{ values[index] }} {{ loop.index }}<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+  {% endfor %}
+<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+</pre></div>
+<hr/>
+<h4 id="3.6.-Explanation-of-the-Example:">3.6. Explanation of the Example:<a class="anchor-link" href="#3.6.-Explanation-of-the-Example:">¶</a></h4><ol>
+<li><p><strong><code>range(values | length)</code></strong>:</p>
+<ul>
+<li>Iterates over the range of the list length (<code>values | length</code>).</li>
+</ul>
+</li>
+<li><p><strong><code>values[index]</code></strong>:</p>
+<ul>
+<li>Dynamically accesses the element at the <code>index</code> position in the list.</li>
+</ul>
+</li>
+<li><p><strong><code>loop.index</code></strong>:</p>
+<ul>
+<li>Provides the current iteration count (starting from 1).</li>
+</ul>
+</li>
+</ol>
+<hr/>
+<h4 id="3.7.-Sample-Output:">3.7. Sample Output:<a class="anchor-link" href="#3.7.-Sample-Output:">¶</a></h4><p>If <code>values = ['list1', 'list2', 'list3']</code>, the generated HTML would look like:</p>
+<div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>list1 1<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>list2 2<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>list3 3<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="4.-Conditionals-in-Jinja2-Template-Syntax">4. Conditionals in Jinja2 Template Syntax<a class="anchor-link" href="#4.-Conditionals-in-Jinja2-Template-Syntax">¶</a></h3><h4 id="4.1.-Folder-Structure">4.1. Folder Structure<a class="anchor-link" href="#4.1.-Folder-Structure">¶</a></h4><p>The folder structure for this example should be as follows:</p>
+<pre><code>/condition_test.py
+/templates
+    /condition.html
+</code></pre>
+<h4 id="4.2.-Conditional-Statements-in-Jinja2-Templates">4.2. Conditional Statements in Jinja2 Templates<a class="anchor-link" href="#4.2.-Conditional-Statements-in-Jinja2-Templates">¶</a></h4><ul>
+<li>Jinja2 supports <code>if</code>, <code>elif</code>, <code>else</code>, and <code>endif</code> for conditional logic.</li>
+<li><code>elif</code> and <code>else</code> are optional depending on your use case.</li>
+</ul>
+<p><strong>Basic Syntax:</strong></p>
+<div class="highlight"><pre><span></span><span class="p">{</span><span class="o">%</span> <span class="k">if</span> <span class="o">%</span><span class="p">}</span> <span class="p">{</span><span class="o">%</span> <span class="k">elif</span> <span class="o">%</span><span class="p">}</span> <span class="p">{</span><span class="o">%</span> <span class="k">else</span> <span class="o">%</span><span class="p">}</span> <span class="p">{</span><span class="o">%</span> <span class="n">endif</span> <span class="o">%</span><span class="p">}</span>
+</pre></div>
+<p><strong>Example:</strong></p>
+<ul>
+<li>Indentation is not required but improves readability.</li>
+</ul>
+<div class="highlight"><pre><span></span>{% if data &gt;= 30 %}
+<span class="p">&lt;</span><span class="nt">h3</span><span class="p">&gt;</span>The value is greater than or equal to 30.<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+{% elif data &gt; 25 %}
+<span class="p">&lt;</span><span class="nt">h3</span><span class="p">&gt;</span>The value is greater than 25.<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+{% else %}
+<span class="p">&lt;</span><span class="nt">h3</span><span class="p">&gt;</span>{{ data }}<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+{% endif %}
+</pre></div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1">### Flask Code Example</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">render_template</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/condition/&lt;int:value&gt;'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">condition</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="c1"># Pass a value (27 in this case) to the HTML template</span>
+    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">'condition.html'</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">"127.0.0.1"</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="s2">"5555"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre> * Serving Flask app '__main__'
+ * Debug mode: off
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5555
+Press CTRL+C to quit
+127.0.0.1 - - [02/Jan/2025 22:42:18] "GET /condition/26 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Jan/2025 22:42:52] "GET /condition/30 HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="4.3.-HTML-Template:-condition.html">4.3. HTML Template: <code>condition.html</code><a class="anchor-link" href="#4.3.-HTML-Template:-condition.html">¶</a></h4><div class="highlight"><pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">"viewport"</span> <span class="na">content</span><span class="o">=</span><span class="s">"width=device-width, initial-scale=1.0"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Condition Example<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="cm">&lt;!-- Render different content based on the value of 'data' --&gt;</span>
+    {% if data &gt;= 30 %}
+    <span class="p">&lt;</span><span class="nt">h3</span><span class="p">&gt;</span>The value is greater than or equal to 30.<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+    {% elif data &gt; 25 %}
+    <span class="p">&lt;</span><span class="nt">h3</span><span class="p">&gt;</span>The value is greater than 25.<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+    {% else %}
+    <span class="p">&lt;</span><span class="nt">h3</span><span class="p">&gt;</span>{{ data }}<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+    {% endif %}
+  <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+<h4 id="4.4.-Explanation:">4.4. Explanation:<a class="anchor-link" href="#4.4.-Explanation:">¶</a></h4><ol>
+<li><p><strong>Jinja2 Conditionals</strong>:</p>
+<ul>
+<li><code>if</code> checks the condition (<code>data &gt;= 30</code>).</li>
+<li><code>elif</code> adds an additional condition (<code>data &gt; 25</code>).</li>
+<li><code>else</code> handles all other cases when neither <code>if</code> nor <code>elif</code> are satisfied.</li>
+</ul>
+</li>
+<li><p><strong>Flask Code</strong>:</p>
+<ul>
+<li>The <code>hello_html()</code> function sets the value of <code>data</code> to 27 and passes it to the <code>condition.html</code> template.</li>
+</ul>
+</li>
+<li><p><strong>Rendered Output in Browser</strong>:</p>
+<ul>
+<li>When you visit <code>http://0.0.0.0:8080/hello_if</code> in the browser, the condition <code>data &gt; 25</code> is true.</li>
+<li>The browser will display:<pre><code>&lt;h3&gt;The value is greater than 25.&lt;/h3&gt;
+</code></pre>
+</li>
+</ul>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head><meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="stylesheet" href="/css/jp-notebook.css">
+<!-- Load mathjax -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS_CHTML-full,Safe"> </script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    init_mathjax = function() {
+        if (window.MathJax) {
+        // MathJax loaded
+            MathJax.Hub.Config({
+                TeX: {
+                    equationNumbers: {
+                    autoNumber: "AMS",
+                    useLabelIds: true
+                    }
+                },
+                tex2jax: {
+                    inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+                    displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+                    processEscapes: true,
+                    processEnvironments: true
+                },
+                displayAlign: 'center',
+                messageStyle: 'none',
+                CommonHTML: {
+                    linebreaks: {
+                    automatic: true
+                    }
+                }
+            });
+
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+        }
+    }
+    init_mathjax();
+    </script>
+<!-- End of mathjax configuration --><script type="module">
+  document.addEventListener("DOMContentLoaded", async () => {
+    const diagrams = document.querySelectorAll(".jp-Mermaid > pre.mermaid");
+    // do not load mermaidjs if not needed
+    if (!diagrams.length) {
+      return;
+    }
+    const mermaid = (await import("https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.7.0/mermaid.esm.min.mjs")).default;
+    const parser = new DOMParser();
+
+    mermaid.initialize({
+      maxTextSize: 100000,
+      maxEdges: 100000,
+      startOnLoad: false,
+      fontFamily: window
+        .getComputedStyle(document.body)
+        .getPropertyValue("--jp-ui-font-family"),
+      theme: document.querySelector("body[data-jp-theme-light='true']")
+        ? "default"
+        : "dark",
+    });
+
+    let _nextMermaidId = 0;
+
+    function makeMermaidImage(svg) {
+      const img = document.createElement("img");
+      const doc = parser.parseFromString(svg, "image/svg+xml");
+      const svgEl = doc.querySelector("svg");
+      const { maxWidth } = svgEl?.style || {};
+      const firstTitle = doc.querySelector("title");
+      const firstDesc = doc.querySelector("desc");
+
+      img.setAttribute("src", `data:image/svg+xml,${encodeURIComponent(svg)}`);
+      if (maxWidth) {
+        img.width = parseInt(maxWidth);
+      }
+      if (firstTitle) {
+        img.setAttribute("alt", firstTitle.textContent);
+      }
+      if (firstDesc) {
+        const caption = document.createElement("figcaption");
+        caption.className = "sr-only";
+        caption.textContent = firstDesc.textContent;
+        return [img, caption];
+      }
+      return [img];
+    }
+
+    async function makeMermaidError(text) {
+      let errorMessage = "";
+      try {
+        await mermaid.parse(text);
+      } catch (err) {
+        errorMessage = `${err}`;
+      }
+
+      const result = document.createElement("details");
+      result.className = 'jp-RenderedMermaid-Details';
+      const summary = document.createElement("summary");
+      summary.className = 'jp-RenderedMermaid-Summary';
+      const pre = document.createElement("pre");
+      const code = document.createElement("code");
+      code.innerText = text;
+      pre.appendChild(code);
+      summary.appendChild(pre);
+      result.appendChild(summary);
+
+      const warning = document.createElement("pre");
+      warning.innerText = errorMessage;
+      result.appendChild(warning);
+      return [result];
+    }
+
+    async function renderOneMarmaid(src) {
+      const id = `jp-mermaid-${_nextMermaidId++}`;
+      const parent = src.parentNode;
+      let raw = src.textContent.trim();
+      const el = document.createElement("div");
+      el.style.visibility = "hidden";
+      document.body.appendChild(el);
+      let results = null;
+      let output = null;
+      try {
+        let { svg } = await mermaid.render(id, raw, el);
+        svg = cleanMermaidSvg(svg);
+        results = makeMermaidImage(svg);
+        output = document.createElement("figure");
+        results.map(output.appendChild, output);
+      } catch (err) {
+        parent.classList.add("jp-mod-warning");
+        results = await makeMermaidError(raw);
+        output = results[0];
+      } finally {
+        el.remove();
+      }
+      parent.classList.add("jp-RenderedMermaid");
+      parent.appendChild(output);
+    }
+
+
+    /**
+     * Post-process to ensure mermaid diagrams contain only valid SVG and XHTML.
+     */
+    function cleanMermaidSvg(svg) {
+      return svg.replace(RE_VOID_ELEMENT, replaceVoidElement);
+    }
+
+
+    /**
+     * A regular expression for all void elements, which may include attributes and
+     * a slash.
+     *
+     * @see https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+     *
+     * Of these, only `<br>` is generated by Mermaid in place of `\n`,
+     * but _any_ "malformed" tag will break the SVG rendering entirely.
+     */
+    const RE_VOID_ELEMENT =
+      /<\s*(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)\s*([^>]*?)\s*>/gi;
+
+    /**
+     * Ensure a void element is closed with a slash, preserving any attributes.
+     */
+    function replaceVoidElement(match, tag, rest) {
+      rest = rest.trim();
+      if (!rest.endsWith('/')) {
+        rest = `${rest} /`;
+      }
+      return `<${tag} ${rest}>`;
+    }
+
+    void Promise.all([...diagrams].map(renderOneMarmaid));
+  });
+</script>
+<!-- End of mermaid configuration --></head>
+<body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
+<main>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="1.-Introduction-to-Vue,-CDN-and-Flask-with-REST-API">1. Introduction to Vue, CDN and Flask with REST API<a class="anchor-link" href="#1.-Introduction-to-Vue,-CDN-and-Flask-with-REST-API">¶</a></h3>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="1.1.-What-is-a-CDN?">1.1. What is a CDN?<a class="anchor-link" href="#1.1.-What-is-a-CDN?">¶</a></h4><ul>
+<li>A <strong>CDN (Content Delivery Network)</strong> refers to a technology that delivers the content of a provider more efficiently to users who are geographically or physically far away.</li>
+<li>When a user downloads content from a distant server, it can take a long time. To address this, the content is cached on a <strong>Cache Server</strong> closer to the user. When content is requested, the <strong>Cache Server</strong> responds instead of the main server.</li>
+</ul>
+<blockquote>
+<p>Bootstrap CDN Introduction: <a href="https://getbootstrap.com/docs/4.5/getting-started/introduction/">https://getbootstrap.com/docs/4.5/getting-started/introduction/</a></p>
+</blockquote>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="2.-vue_test.html">2. <code>vue_test.html</code><a class="anchor-link" href="#2.-vue_test.html">¶</a></h3>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="2.1.-Adding-Bootstrap-CDN-Code">2.1. Adding Bootstrap CDN Code<a class="anchor-link" href="#2.1.-Adding-Bootstrap-CDN-Code">¶</a></h4><ol>
+<li>Place the <code>vue_test.html</code> file inside the <strong>templates</strong> folder.</li>
+<li>Add sample code by referencing the Bootstrap Guide (<a href="https://getbootstrap.com/docs/4.5/getting-started/introduction/">https://getbootstrap.com/docs/4.5/getting-started/introduction/</a>).</li>
+</ol>
+<img src="/image/Blog_Photos/Python/Flask/Vue/01.png" 
+  alt="Start Template" 
+  style="display: block; margin: 0 auto; max-width: 80%; height: auto;">
+<blockquote>
+<p><strong>How to use a CDN</strong>: Instead of placing important JavaScript or CSS files on your server, you can use a specific URL to allow the browser to automatically download them when opening the webpage.</p>
+</blockquote>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="2.1.-Adding-Vue-Code">2.1. Adding Vue Code<a class="anchor-link" href="#2.1.-Adding-Vue-Code">¶</a></h4><ol>
+<li><p>Wrap the display area inside the <code>&lt;body&gt;</code> tag using the <code>&lt;div id='vue_test'&gt;&lt;/div&gt;</code> tag.</p>
+</li>
+<li><p>Add a Bootstrap button inside the <code>&lt;div id='vue_test'&gt;&lt;/div&gt;</code> tag. (Reference Example: <a href="https://getbootstrap.com/docs/4.5/components/buttons/">https://getbootstrap.com/docs/4.5/components/buttons/</a>)<br/>
+  <img src="/image/Blog_Photos/Python/Flask/Vue/02.png" 
+  alt="Add Vue tag" 
+  style="display: block; margin: 0 auto; max-width: 80%; height: auto;"></p>
+</li>
+<li><p>Add a Vue.js CDN link above the <code>&lt;/body&gt;</code> tag.<br/>
+  <img src="/image/Blog_Photos/Python/Flask/Vue/03.png" 
+  alt="Add Vue.js CDN" 
+  style="display: block; margin: 0 auto; max-width: 80%; height: auto;"></p>
+</li>
+<li><p>To use Axios, add the following script tag right after the Vue.js CDN link:<br>
+  <img src="/image/Blog_Photos/Python/Flask/Vue/04.png" 
+  alt="Add script tag to use Axios" 
+  style="display: block; margin: 0 auto; max-width: 80%; height: auto;"></br></p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="2.2.-Vue-+-Axios-Code-Integration">2.2. Vue + Axios Code Integration<a class="anchor-link" href="#2.2.-Vue-+-Axios-Code-Integration">¶</a></h4><p>Use <strong>Axios</strong> to call the <strong>Flask REST API</strong>. <br/>
+Add a button using Bootstrap for testing API calls.<br/></p>
+<ol>
+<li><p>HTML (Vue + Axios Button Example)<br/>
+  <img src="/image/Blog_Photos/Python/Flask/Vue/05.png" 
+  alt="HTML Example" 
+  style="display: block; margin: 0 auto; max-width: 80%; height: auto;"></p>
+</li>
+<li><p>Add the following code to enable Axios functionality:<br/>
+  <img src="/image/Blog_Photos/Python/Flask/Vue/06.png" 
+  alt="Axios funtions" 
+  style="display: block; margin: 0 auto; max-width: 80%; height: auto;"></p>
+</li>
+</ol>
+<blockquote>
+<p><strong>Include Vue.js and Axios CDNs</strong></p>
+<ul>
+<li>Vue.js and Axios are included via CDN to enable Vue functionalities and REST API requests in this HTML document.</li>
+</ul>
+</blockquote>
+<blockquote>
+<p><strong>Initialize Vue Instance</strong></p>
+<ul>
+<li>A new Vue instance is created and linked to the DOM element with the <code>id="vue_test"</code>. This binds the Vue app to the specific part of the HTML page.</li>
+</ul>
+</blockquote>
+<blockquote>
+<p><strong>Define Axios Method</strong></p>
+<ul>
+<li>The <code>axios_test()</code> method is defined inside the <code>methods</code> object. This method will handle API requests using Axios.</li>
+</ul>
+</blockquote>
+<blockquote>
+<p><strong>Specify API Endpoint</strong></p>
+<ul>
+<li>The <code>axios()</code> function sends a GET request to the Flask REST API endpoint at <code>http://localhost:5555/test</code>.</li>
+</ul>
+</blockquote>
+<blockquote>
+<p><strong>Handle API Response</strong></p>
+<ul>
+<li>The <code>.then()</code> block handles a successful API response and logs it to the console.</li>
+<li>The <code>.catch()</code> block handles any errors that occur during the API request and logs them to the console.</li>
+</ul>
+</blockquote>
+<hr/>
+<p>※ The final <code>vue_test.html</code> file can be found in my GitHub PPP repository. (<a href="https://github.com/Kim-William/Personal_Python_Projects">https://github.com/Kim-William/Personal_Python_Projects</a>)</p>
+<hr/>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="2.3.-Flask-API-Example">2.3. Flask API Example<a class="anchor-link" href="#2.3.-Flask-API-Example">¶</a></h4><p>The Flask server code is set up to respond to the Vue.js Axios request with JSON data.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Flask API Example Code</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">make_response</span><span class="p">,</span> <span class="n">jsonify</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/test'</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">'GET'</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">index</span><span class="p">():</span>
+    <span class="c1"># Define the data to return</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'success'</span><span class="p">:</span> <span class="s1">'True'</span><span class="p">,</span>
+        <span class="s1">'name'</span><span class="p">:</span> <span class="s1">'kim'</span><span class="p">,</span>
+        <span class="s1">'email-addr'</span><span class="p">:</span> <span class="s1">'kim.woongkeol@gmail.com'</span>
+    <span class="p">}</span>
+    <span class="c1"># Return the response as JSON</span>
+    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="mi">200</span><span class="p">)</span>
+
+<span class="c1"># Run the Flask app</span>
+<span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">'127.0.0.1'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre> * Serving Flask app '__main__'
+ * Debug mode: off
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5555
+Press CTRL+C to quit
+127.0.0.1 - - [04/Jan/2025 15:05:12] "GET /test HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="2.4.-How-This-Works">2.4. How This Works<a class="anchor-link" href="#2.4.-How-This-Works">¶</a></h4><ol>
+<li><p><strong>Run <code>vue_test.html</code></strong>:</p>
+<ul>
+<li>Open the <code>vue_test.html</code> file in a browser (e.g., Chrome) or use the <strong>Live Server</strong> extension in Visual Studio Code.</li>
+</ul>
+</li>
+<li><p><strong>Run Flask API Example Code</strong>:</p>
+<ul>
+<li>Start the Flask server by running the provided Flask example code.</li>
+<li>Ensure that the port specified in the Flask app (e.g., <code>5555</code>) matches the port configured in the <code>axios_test</code> method of <code>vue_test.html</code>.</li>
+</ul>
+</li>
+<li><p><strong>Enable Developer Mode</strong>:</p>
+<ul>
+<li>For Chrome browser (Windows), press <code>F12</code> to open <strong>Developer Tools</strong>.</li>
+</ul>
+</li>
+<li><p><strong>Open Console Tab</strong>:</p>
+<ul>
+<li>Navigate to the <strong>Console</strong> tab within Developer Tools.</li>
+</ul>
+</li>
+<li><p><strong>Click the GET Button</strong>:</p>
+<ul>
+<li>In the browser, click the <strong>GET</strong> button in the <code>vue_test.html</code> interface.</li>
+</ul>
+</li>
+<li><p><strong>Check Console Output</strong>:</p>
+<ul>
+<li>After clicking the GET button, observe the output in the browser's Console tab.</li>
+<li>If the API request is successful, you should see the response from the Flask API.</li>
+</ul>
+</li>
+<li><p><strong>Handle CORS Error</strong>:</p>
+<ul>
+<li>If an error related to <code>Access-Control-Allow-Origin</code> is displayed in the Console, it indicates a CORS policy issue.</li>
+<li>Stop the Flask API and proceed to the next chapter.</li>
+</ul>
+</li>
+</ol>
+<img src="/image/Blog_Photos/Python/Flask/Vue/07.png" 
+alt="what is cors?" 
+style="display: block; margin: 0 auto; max-width: 80%; height: auto;">
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="3.-CORS-(Cross-Origin-Resource-Sharing)">3. CORS (Cross-Origin Resource Sharing)<a class="anchor-link" href="#3.-CORS-(Cross-Origin-Resource-Sharing)">¶</a></h3>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>HTTP requests in web browsers can typically fetch data from different domains.</p>
+<ul>
+<li>Examples:<ul>
+<li>Access a webpage: <code>www.woongkeol.com</code>.</li>
+<li>This webpage can use an <code>&lt;img&gt;</code> tag to fetch an image file from <code>https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_92x30dp.png</code>.</li>
+<li>It can also use a <code>&lt;link&gt;</code> tag to fetch a CSS file from <code>https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&amp;display=swap</code>.</li>
+</ul>
+</li>
+<li><strong>However</strong>, any HTTP requests made inside <code>&lt;script&gt;</code> tags (e.g., using <code>ajax</code> or <code>axios</code>) are restricted to the domain where the script originated.<div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="c1">// Restricted HTTP requests</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</li>
+<li>This restriction applies to requests based on the same <strong>protocol</strong>, <strong>hostname</strong>, and <strong>port</strong>.</li>
+<li>This rule is called the <strong>Same-Origin Policy</strong>.</li>
+</ul>
+<blockquote>
+<p>As developers started to use tools like <code>ajax</code> and <code>axios</code> to make HTTP requests inside <code>&lt;script&gt;</code> tags, the need arose to allow cross-domain requests within these scripts. This led to the introduction of the <strong>CORS (Cross-Origin Resource Sharing)</strong> guideline, which is implemented differently across languages.</p>
+</blockquote>
+<h4 id="3.1.-Error:-CORS-Issue">3.1. Error: CORS Issue<a class="anchor-link" href="#3.1.-Error:-CORS-Issue">¶</a></h4><p>If the HTTP response headers do not contain the required <code>Access-Control-Allow-Origin</code> information, browsers will block the request based on their security policies.</p>
+<h4 id="3.2.-Supporting-CORS-in-Flask">3.2. Supporting CORS in Flask<a class="anchor-link" href="#3.2.-Supporting-CORS-in-Flask">¶</a></h4><p>To enable CORS in a Flask application, you can use the <code>flask_cors</code> library.</p>
+<h5 id="3.2.1.-Installation:">3.2.1. Installation:<a class="anchor-link" href="#3.2.1.-Installation:">¶</a></h5><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>flask_cors
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h5 id="3.2.2.-Enable-CORS-for-All-Routes:">3.2.2. Enable CORS for All Routes:<a class="anchor-link" href="#3.2.2.-Enable-CORS-for-All-Routes:">¶</a></h5>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>flask_cors
+<span class="kn">from</span> <span class="nn">flask_cors</span> <span class="kn">import</span> <span class="n">CORS</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">CORS</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>  <span class="c1"># Adds CORS headers to all requests and responses</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="3.3-Flask-API-Example-with-CORS-Support">3.3 Flask API Example with CORS Support<a class="anchor-link" href="#3.3-Flask-API-Example-with-CORS-Support">¶</a></h4>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Enabling CORS in Flask Example code</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">make_response</span><span class="p">,</span> <span class="n">jsonify</span>
+<span class="kn">from</span> <span class="nn">flask_cors</span> <span class="kn">import</span> <span class="n">CORS</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="c1"># Enable CORS for all routes</span>
+<span class="n">CORS</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>  
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/test'</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">'GET'</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">index</span><span class="p">():</span>
+    <span class="c1"># Define the data to return</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'success'</span><span class="p">:</span> <span class="s1">'True'</span><span class="p">,</span>
+        <span class="s1">'name'</span><span class="p">:</span> <span class="s1">'kim'</span><span class="p">,</span>
+        <span class="s1">'email-addr'</span><span class="p">:</span> <span class="s1">'kim.woongkeol@gmail.com'</span>
+    <span class="p">}</span>
+    <span class="c1"># Return the response as JSON</span>
+    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="mi">200</span><span class="p">)</span>
+
+<span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">'127.0.0.1'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre> * Serving Flask app '__main__'
+ * Debug mode: off
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5555
+Press CTRL+C to quit
+127.0.0.1 - - [04/Jan/2025 23:12:53] "GET /test HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="3.4.-How-This-Works">3.4. How This Works<a class="anchor-link" href="#3.4.-How-This-Works">¶</a></h4><ol>
+<li><p><strong>CDN Setup</strong>:</p>
+<ul>
+<li>Bootstrap and Vue.js are loaded using their respective CDNs in <code>vue_test.html</code>.</li>
+</ul>
+</li>
+<li><p><strong>Vue + Axios</strong>:</p>
+<ul>
+<li>When the button is clicked, Axios sends a GET request to the Flask REST API at <code>http://localhost:5555/test</code>.</li>
+<li>The response from the API is logged in the browser's developer console.</li>
+</ul>
+</li>
+<li><p><strong>Flask API</strong>:</p>
+<ul>
+<li>The Flask server listens for a GET request at <code>/test</code> and returns a JSON response with the provided data.</li>
+</ul>
+</li>
+<li><p><strong>CORS</strong>:</p>
+<ul>
+<li><code>CORS(app)</code> is added to allow cross-origin requests from the frontend (Vue.js) to the backend (Flask).</li>
+</ul>
+</li>
+</ol>
+<h4 id="3.5.-Expected-Output">3.5. Expected Output<a class="anchor-link" href="#3.5.-Expected-Output">¶</a></h4><ul>
+<li><strong>Frontend</strong>: When the button is clicked, the browser's console logs the following response:<div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"success"</span><span class="p">:</span><span class="w"> </span><span class="s2">"True"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"kim"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"email-addr"</span><span class="p">:</span><span class="w"> </span><span class="s2">"kim.woongkeol@gmail.com"</span>
+<span class="p">}</span>
+</pre></div>
+</li>
+</ul>
+<img src="/image/Blog_Photos/Python/Flask/Vue/08.png" 
+alt="resolved cors error" 
+style="display: block; margin: 0 auto; max-width: 80%; height: auto;">
+<ul>
+<li><strong>Backend</strong>: The Flask server handles the GET request and responds with the JSON data.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="4.-REST-API-Implementation-Example">4. REST API Implementation Example<a class="anchor-link" href="#4.-REST-API-Implementation-Example">¶</a></h3>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="4.1.-REST-API">4.1. REST API<a class="anchor-link" href="#4.1.-REST-API">¶</a></h4><ul>
+<li>The goal is to create an API that retrieves parameter values in JSON format from a specific URI and returns data in JSON format.</li>
+<li>In Flask:<ul>
+<li>Use Python's <code>dict</code> type for the response data.</li>
+<li>Convert the <code>dict</code> into JSON format using the <code>jsonify()</code> function.</li>
+</ul>
+</li>
+</ul>
+<h4 id="4.2.-Define-REST-API-Methods">4.2. Define REST API Methods<a class="anchor-link" href="#4.2.-Define-REST-API-Methods">¶</a></h4><ul>
+<li>When defining Flask APIs, specify the supported HTTP request methods in the <code>methods</code> parameter.</li>
+<li>The method to extract parameter values depends on the request method:<ul>
+<li><code>GET</code>, <code>PUT</code>, and <code>DELETE</code> methods follow the same parameter extraction process.</li>
+<li><code>POST</code> uses a different process for parameter extraction.</li>
+</ul>
+</li>
+<li>Use Flask's <code>jsonify()</code> function to return data in JSON format.</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Define REST API methods Example Code</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jsonify</span>
+<span class="kn">from</span> <span class="nn">flask_cors</span> <span class="kn">import</span> <span class="n">CORS</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="c1"># Enable CORS for all routes</span>
+<span class="n">CORS</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>  
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">"/test"</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">'GET'</span><span class="p">,</span> <span class="s1">'POST'</span><span class="p">,</span> <span class="s1">'PUT'</span><span class="p">,</span> <span class="s1">'DELETE'</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">test</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'POST'</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'email'</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'GET'</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'GET'</span><span class="p">)</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'PUT'</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'PUT'</span><span class="p">)</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'DELETE'</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'DELETE'</span><span class="p">)</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s1">'status'</span><span class="p">:</span> <span class="s1">'success'</span><span class="p">})</span>
+
+<span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">'127.0.0.1'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre> * Serving Flask app '__main__'
+ * Debug mode: off
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5555
+Press CTRL+C to quit
+127.0.0.1 - - [05/Jan/2025 23:30:22] "GET /test?email=test@test.com HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>GET
+test@test.com
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>127.0.0.1 - - [05/Jan/2025 23:30:23] "OPTIONS /test HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jan/2025 23:30:23] "POST /test HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>POST
+test@test.com
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>127.0.0.1 - - [05/Jan/2025 23:30:24] "OPTIONS /test?email=test@test.com HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jan/2025 23:30:24] "PUT /test?email=test@test.com HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>PUT
+test@test.com
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>127.0.0.1 - - [05/Jan/2025 23:30:24] "DELETE /test?email=test@test.com HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>DELETE
+test@test.com
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>127.0.0.1 - - [05/Jan/2025 23:30:27] "GET /test?email=test@test.com HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>GET
+test@test.com
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>127.0.0.1 - - [05/Jan/2025 23:30:28] "POST /test HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>POST
+test@test.com
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>127.0.0.1 - - [05/Jan/2025 23:30:28] "PUT /test?email=test@test.com HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>PUT
+test@test.com
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>127.0.0.1 - - [05/Jan/2025 23:30:29] "OPTIONS /test?email=test@test.com HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jan/2025 23:30:29] "DELETE /test?email=test@test.com HTTP/1.1" 200 -
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>DELETE
+test@test.com
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="5.-Making-HTTP-Requests-with-Axios-in-Vue.js">5. Making HTTP Requests with Axios in Vue.js<a class="anchor-link" href="#5.-Making-HTTP-Requests-with-Axios-in-Vue.js">¶</a></h3>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="5.1.-Vue-Template-for-Buttons">5.1. Vue Template for Buttons<a class="anchor-link" href="#5.1.-Vue-Template-for-Buttons">¶</a></h4><ul>
+<li>Create buttons in your Vue template to trigger specific HTTP request methods when clicked.</li>
+</ul>
+<img src="/image/Blog_Photos/Python/Flask/Vue/09.png" 
+alt="Vue methods" 
+style="display: block; margin: 0 auto; max-width: 80%; height: auto;">
+<ul>
+<li>Modify the <code>vue_test.html</code> file's buttons as shown in the image above.</li>
+</ul>
+<blockquote>
+<p>For the completed file, please refer to the 'rest_api_test.html' file in my GitHub repository.</p>
+</blockquote>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h4 id="5.2.-Vue-Methods-Using-Axios">5.2. Vue Methods Using Axios<a class="anchor-link" href="#5.2.-Vue-Methods-Using-Axios">¶</a></h4><ul>
+<li>Use Axios to send HTTP requests from the frontend.</li>
+<li>HTTP request method is specified using the <code>method</code> field.</li>
+<li>Parameter values:<ul>
+<li><code>GET</code>, <code>PUT</code>, and <code>DELETE</code>: Include parameters in the <code>params</code> field as JSON.</li>
+<li><code>POST</code>: Include parameters in the <code>data</code> field as JSON.</li>
+</ul>
+</li>
+<li>Extract response data using <code>response.data</code>.</li>
+<li>Modify the <code>const app = new Vue</code> script in the <code>vue_test.html</code> file as shown in the image below.</li>
+</ul>
+<img src="/image/Blog_Photos/Python/Flask/Bootstrap/01.png" 
+alt="Add script tag to use Axios" 
+style="display: block; margin: 0 auto; max-width: 80%; height: auto;">
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="6.-HTTP-Request-Methods-(Request-Method)">6. HTTP Request Methods (Request Method)<a class="anchor-link" href="#6.-HTTP-Request-Methods-(Request-Method)">¶</a></h3>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ul>
+<li>Indicates the purpose of the HTTP request from the client to the server.</li>
+<li>Commonly used methods include <code>GET</code>, <code>POST</code>, <code>PUT</code>, and <code>DELETE</code>. Among these, <code>GET</code> and <code>POST</code> are most frequently used.</li>
+<li>The way request data is delivered depends on the method.</li>
+</ul>
+<h4 id="6.1.-Key-Request-Methods-in-HTML">6.1. Key Request Methods in HTML<a class="anchor-link" href="#6.1.-Key-Request-Methods-in-HTML">¶</a></h4><ul>
+<li>HTML only supports <code>GET</code> and <code>POST</code> request methods.</li>
+</ul>
+<ol>
+<li><p><strong>GET</strong>: Retrieve Information (SELECT)</p>
+<ul>
+<li>Parameters are passed in the URL.</li>
+</ul>
+</li>
+<li><p><strong>POST</strong>: Submit Information (INSERT)</p>
+<ul>
+<li>Parameters are included in the HTTP body, not visible to the user.</li>
+</ul>
+</li>
+<li><p><strong>PUT (UPDATE)</strong> and <strong>DELETE (DELETE)</strong>:</p>
+<ul>
+<li>Parameters are passed in the URL, similar to <code>GET</code>.</li>
+</ul>
+</li>
+</ol>
+<h4 id="6.2.-Summary">6.2. Summary<a class="anchor-link" href="#6.2.-Summary">¶</a></h4><ul>
+<li><code>POST</code> is preferred for sensitive data as it doesn't expose parameters in the URL.</li>
+<li>For RESTful APIs, it is recommended to use HTTP methods (<code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>) based on their intended functionality.<br/>This approach is referred to as being <strong>RESTful</strong>.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body>
+</html>
