@@ -1,0 +1,24 @@
+{# template_project > index.html #}
+{% extends "base.html" %}
+{% block content %}
+    <p>{{ text }}</p>
+
+{# template_project > index.html (2) #}
+{% if time_of_day == "morning" %}
+    <h1>Good Morning!</h1>
+{% elif time_of_day == "afternoon" %}
+    <h1>Good Afternoon!</h1>
+{% else %}
+    <h1>Good Evening!</h1>  
+{% endif %}
+
+{# template_project > index.html (3) #}
+{% if items is defined and items is not none %}
+    <ul>
+    {% for item in items %}
+        <li>{{ item }}</li>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+{% endblock %}
