@@ -17,3 +17,6 @@
 01_crawling/tmp_1.xlsx
 04_FastAPI/09_jinja_baisc/my_project/__pycache__
 04_FastAPI/09_jinja_baisc/template_project/__pycache__
+.DS_Store
+04_FastAPI/.DS_Store
+04_FastAPI/11_sqlalchemy_basic/defining_database_model/__pycache__
